@@ -1,16 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from './AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { ShoppingCart, LogOut, FileText, Download, Trash2, Plus, Minus } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-import { projectId } from '/utils/supabase/info';
-import { Logo } from './Logo';
+import { useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import {
+  ShoppingCart,
+  LogOut,
+  FileText,
+  Download,
+  Trash2,
+  Plus,
+  Minus,
+} from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { projectId } from "/utils/supabase/info";
+import { Logo } from "./Logo";
 
 interface Product {
   code: string;
@@ -33,7 +47,7 @@ export function UserDashboard() {
   const [cartOpen, setCartOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadProducts();
@@ -44,15 +58,15 @@ export function UserDashboard() {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-745f9946/products`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
       );
       const data = await response.json();
       if (response.ok) {
         setProducts(data.products || []);
       }
     } catch (error) {
-      toast.error('Error al cargar productos');
+      toast.error("Error al cargar productos");
     } finally {
       setLoading(false);
     }
@@ -65,12 +79,12 @@ export function UserDashboard() {
         return prev.map((item) =>
           item.code === product.code
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         );
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-    toast.success('Producto añadido al carrito');
+    toast.success("Producto añadido al carrito");
   };
 
   const updateQuantity = (code: string, delta: number) => {
@@ -79,9 +93,9 @@ export function UserDashboard() {
         .map((item) =>
           item.code === code
             ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-            : item
+            : item,
         )
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0),
     );
   };
 
@@ -104,11 +118,11 @@ export function UserDashboard() {
     const doc = new jsPDF();
 
     doc.setFontSize(18);
-    doc.text('FERRE ALIANZA IMPORT, C.A.', 105, 20, { align: 'center' });
+    doc.text("FERRE ALIANZA IMPORT, C.A.", 105, 20, { align: "center" });
     doc.setFontSize(12);
-    doc.text('Orden de Pedido', 105, 30, { align: 'center' });
+    doc.text("Orden de Pedido", 105, 30, { align: "center" });
     doc.setFontSize(10);
-    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 14, 40);
+    doc.text(`Fecha: ${new Date().toLocaleDateString("es-ES")}`, 14, 40);
     doc.text(`Cliente: ${user?.user_metadata?.name}`, 14, 46);
 
     const tableData = cart.map((item) => [
@@ -118,15 +132,25 @@ export function UserDashboard() {
       item.amountPerPackage,
       item.quantity,
       `$${item.price.toFixed(2)}`,
-      `$${(item.price * item.quantity).toFixed(2)}`
+      `$${(item.price * item.quantity).toFixed(2)}`,
     ]);
 
     autoTable(doc, {
       startY: 55,
-      head: [['Código', 'Producto', 'Categoría', 'Cant/Paq', 'Cant', 'Precio', 'Total']],
+      head: [
+        [
+          "Código",
+          "Producto",
+          "Categoría",
+          "Cant/Paq",
+          "Cant",
+          "Precio",
+          "Total",
+        ],
+      ],
       body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [214, 158, 46] }
+      theme: "striped",
+      headStyles: { fillColor: [214, 158, 46] },
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -136,13 +160,17 @@ export function UserDashboard() {
     const total = calculateTotal();
 
     doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 14, finalY);
-    doc.text(`Descuento (${discount}%): -$${discountAmount.toFixed(2)}`, 14, finalY + 6);
+    doc.text(
+      `Descuento (${discount}%): -$${discountAmount.toFixed(2)}`,
+      14,
+      finalY + 6,
+    );
     doc.text(`Impuesto (${tax}%): +$${taxAmount.toFixed(2)}`, 14, finalY + 12);
     doc.setFontSize(12);
     doc.text(`TOTAL: $${total.toFixed(2)}`, 14, finalY + 22);
 
     doc.save(`orden-${Date.now()}.pdf`);
-    toast.success('PDF generado exitosamente');
+    toast.success("PDF generado exitosamente");
   };
 
   const exportToExcel = () => {
@@ -150,10 +178,10 @@ export function UserDashboard() {
       Código: item.code,
       Producto: item.name,
       Categoría: item.category,
-      'Cantidad por Paquete': item.amountPerPackage,
+      "Cantidad por Paquete": item.amountPerPackage,
       Cantidad: item.quantity,
       Precio: item.price,
-      Total: item.price * item.quantity
+      Total: item.price * item.quantity,
     }));
 
     const subtotal = calculateSubtotal();
@@ -163,60 +191,67 @@ export function UserDashboard() {
 
     data.push({} as any);
     data.push({
-      Código: '',
-      Producto: '',
-      Categoría: '',
-      'Cantidad por Paquete': '',
-      Cantidad: '',
-      Precio: 'Subtotal:',
-      Total: subtotal
+      Código: "",
+      Producto: "",
+      Categoría: "",
+      "Cantidad por Paquete": "",
+      Cantidad: "",
+      Precio: "Subtotal:",
+      Total: subtotal,
     } as any);
     data.push({
-      Código: '',
-      Producto: '',
-      Categoría: '',
-      'Cantidad por Paquete': '',
-      Cantidad: '',
+      Código: "",
+      Producto: "",
+      Categoría: "",
+      "Cantidad por Paquete": "",
+      Cantidad: "",
       Precio: `Descuento (${discount}%):`,
-      Total: -discountAmount
+      Total: -discountAmount,
     } as any);
     data.push({
-      Código: '',
-      Producto: '',
-      Categoría: '',
-      'Cantidad por Paquete': '',
-      Cantidad: '',
+      Código: "",
+      Producto: "",
+      Categoría: "",
+      "Cantidad por Paquete": "",
+      Cantidad: "",
       Precio: `Impuesto (${tax}%):`,
-      Total: taxAmount
+      Total: taxAmount,
     } as any);
     data.push({
-      Código: '',
-      Producto: '',
-      Categoría: '',
-      'Cantidad por Paquete': '',
-      Cantidad: '',
-      Precio: 'TOTAL:',
-      Total: total
+      Código: "",
+      Producto: "",
+      Categoría: "",
+      "Cantidad por Paquete": "",
+      Cantidad: "",
+      Precio: "TOTAL:",
+      Total: total,
     } as any);
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Orden');
+    XLSX.utils.book_append_sheet(wb, ws, "Orden");
     XLSX.writeFile(wb, `orden-${Date.now()}.xlsx`);
-    toast.success('Excel generado exitosamente');
+    toast.success("Excel generado exitosamente");
   };
 
   const exportToText = () => {
-    let text = 'FERRE ALIANZA IMPORT, C.A.\n';
-    text += 'ORDEN DE PEDIDO\n';
-    text += `Fecha: ${new Date().toLocaleDateString('es-ES')}\n`;
+    let text = "FERRE ALIANZA IMPORT, C.A.\n";
+    text += "ORDEN DE PEDIDO\n";
+    text += `Fecha: ${new Date().toLocaleDateString("es-ES")}\n`;
     text += `Cliente: ${user?.user_metadata?.name}\n\n`;
-    text += '-'.repeat(80) + '\n';
-    text += 'CÓDIGO'.padEnd(12) + 'PRODUCTO'.padEnd(25) + 'CATEGORÍA'.padEnd(15) + 'CANT'.padEnd(8) + 'PRECIO'.padEnd(10) + 'TOTAL\n';
-    text += '-'.repeat(80) + '\n';
+    text += "-".repeat(80) + "\n";
+    text +=
+      "CÓDIGO".padEnd(12) +
+      "PRODUCTO".padEnd(25) +
+      "CATEGORÍA".padEnd(15) +
+      "CANT".padEnd(8) +
+      "PRECIO".padEnd(10) +
+      "TOTAL\n";
+    text += "-".repeat(80) + "\n";
 
     cart.forEach((item) => {
-      text += item.code.padEnd(12) +
+      text +=
+        item.code.padEnd(12) +
         item.name.substring(0, 24).padEnd(25) +
         item.category.substring(0, 14).padEnd(15) +
         item.quantity.toString().padEnd(8) +
@@ -229,29 +264,34 @@ export function UserDashboard() {
     const taxAmount = ((subtotal - discountAmount) * tax) / 100;
     const total = calculateTotal();
 
-    text += '-'.repeat(80) + '\n';
+    text += "-".repeat(80) + "\n";
     text += `Subtotal: $${subtotal.toFixed(2)}\n`;
     text += `Descuento (${discount}%): -$${discountAmount.toFixed(2)}\n`;
     text += `Impuesto (${tax}%): +$${taxAmount.toFixed(2)}\n`;
     text += `TOTAL: $${total.toFixed(2)}\n`;
 
-    const blob = new Blob([text], { type: 'text/plain' });
+    const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `orden-${Date.now()}.txt`;
     a.click();
-    toast.success('Archivo de texto generado exitosamente');
+    toast.success("Archivo de texto generado exitosamente");
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Cargando...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Cargando...
+      </div>
+    );
   }
 
   return (
@@ -260,7 +300,9 @@ export function UserDashboard() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Logo />
-            <h1 className="text-2xl font-bold text-slate-800">Catálogo de Productos</h1>
+            <h1 className="text-2xl font-bold text-slate-800">
+              Catálogo de Productos
+            </h1>
           </div>
           <div className="flex items-center gap-4">
             <Dialog open={cartOpen} onOpenChange={setCartOpen}>
@@ -286,14 +328,23 @@ export function UserDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {cart.map((item) => (
-                      <div key={item.code} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                      <div
+                        key={item.code}
+                        className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg"
+                      >
                         {item.imageUrl && (
-                          <img src={item.imageUrl} alt={item.name} className="w-20 h-20 object-cover rounded" />
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-20 h-20 object-cover rounded"
+                          />
                         )}
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.name}</h3>
                           <p className="text-sm text-slate-600">{item.code}</p>
-                          <p className="text-sm font-bold text-green-600">${item.price.toFixed(2)}</p>
+                          <p className="text-sm font-bold text-green-600">
+                            ${item.price.toFixed(2)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -303,7 +354,9 @@ export function UserDashboard() {
                           >
                             <Minus className="w-4 h-4" />
                           </Button>
-                          <span className="w-12 text-center font-semibold">{item.quantity}</span>
+                          <span className="w-12 text-center font-semibold">
+                            {item.quantity}
+                          </span>
                           <Button
                             size="sm"
                             variant="outline"
@@ -313,7 +366,9 @@ export function UserDashboard() {
                           </Button>
                         </div>
                         <div className="text-right min-w-[100px]">
-                          <p className="font-bold">${(item.price * item.quantity).toFixed(2)}</p>
+                          <p className="font-bold">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </p>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -333,7 +388,9 @@ export function UserDashboard() {
                           <Input
                             type="number"
                             value={discount}
-                            onChange={(e) => setDiscount(Number(e.target.value))}
+                            onChange={(e) =>
+                              setDiscount(Number(e.target.value))
+                            }
                             min="0"
                             max="100"
                           />
@@ -352,9 +409,22 @@ export function UserDashboard() {
 
                       <div className="space-y-1 text-right">
                         <p>Subtotal: ${calculateSubtotal().toFixed(2)}</p>
-                        <p>Descuento ({discount}%): -${((calculateSubtotal() * discount) / 100).toFixed(2)}</p>
-                        <p>Impuesto ({tax}%): +${(((calculateSubtotal() - (calculateSubtotal() * discount) / 100) * tax) / 100).toFixed(2)}</p>
-                        <p className="text-xl font-bold">Total: ${calculateTotal().toFixed(2)}</p>
+                        <p>
+                          Descuento ({discount}%): -$
+                          {((calculateSubtotal() * discount) / 100).toFixed(2)}
+                        </p>
+                        <p>
+                          Impuesto ({tax}%): +$
+                          {(
+                            ((calculateSubtotal() -
+                              (calculateSubtotal() * discount) / 100) *
+                              tax) /
+                            100
+                          ).toFixed(2)}
+                        </p>
+                        <p className="text-xl font-bold">
+                          Total: ${calculateTotal().toFixed(2)}
+                        </p>
                       </div>
 
                       <div className="flex gap-2 pt-4">
@@ -362,11 +432,19 @@ export function UserDashboard() {
                           <FileText className="w-4 h-4 mr-2" />
                           PDF
                         </Button>
-                        <Button onClick={exportToExcel} className="flex-1" variant="outline">
+                        <Button
+                          onClick={exportToExcel}
+                          className="flex-1"
+                          variant="outline"
+                        >
                           <Download className="w-4 h-4 mr-2" />
                           Excel
                         </Button>
-                        <Button onClick={exportToText} className="flex-1" variant="outline">
+                        <Button
+                          onClick={exportToText}
+                          className="flex-1"
+                          variant="outline"
+                        >
                           <FileText className="w-4 h-4 mr-2" />
                           Texto
                         </Button>
@@ -376,7 +454,9 @@ export function UserDashboard() {
                 )}
               </DialogContent>
             </Dialog>
-            <span className="text-sm text-slate-600">{user?.user_metadata?.name}</span>
+            <span className="text-sm text-slate-600">
+              {user?.user_metadata?.name}
+            </span>
             <Button variant="outline" size="sm" onClick={signOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Salir
@@ -398,7 +478,10 @@ export function UserDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.code} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card
+              key={product.code}
+              className="overflow-hidden hover:shadow-lg transition-shadow"
+            >
               <CardHeader className="p-0">
                 {product.imageUrl && (
                   <img
@@ -412,17 +495,20 @@ export function UserDashboard() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-lg">{product.name}</h3>
-                    <span className="text-xs text-slate-500">{product.code}</span>
+                    <span className="text-xs text-slate-500">
+                      {product.code}
+                    </span>
                   </div>
                   <p className="text-sm text-slate-600">{product.category}</p>
                   {product.amountPerPackage && (
-                    <p className="text-xs text-slate-500">Paquete: {product.amountPerPackage}</p>
+                    <p className="text-xs text-slate-500">
+                      Paquete: {product.amountPerPackage}
+                    </p>
                   )}
-                  <p className="text-xl font-bold text-green-600">${product.price.toFixed(2)}</p>
-                  <Button
-                    onClick={() => addToCart(product)}
-                    className="w-full"
-                  >
+                  <p className="text-xl font-bold text-green-600">
+                    ${product.price.toFixed(2)}
+                  </p>
+                  <Button onClick={() => addToCart(product)} className="w-full">
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Añadir al Carrito
                   </Button>
