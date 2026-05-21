@@ -56,7 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       `https://${projectId}.supabase.co/functions/v1/make-server-745f9946/auth/signin`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}`
+        },
         body: JSON.stringify({ email, password })
       }
     );
@@ -73,7 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       `https://${projectId}.supabase.co/functions/v1/make-server-745f9946/auth/signup`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${publicAnonKey}`
+        },
         body: JSON.stringify({ email, password, name, role })
       }
     );
